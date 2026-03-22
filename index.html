@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Ghenova Horario">
+<title>Ghenova · Registro Horario Personal</title>
+<link rel="manifest" href="manifest.json">
+<style>
+:root {
+  --bg:      #f2f2f7;
+  --bg2:     #ffffff;
+  --bg3:     #ffffff;
+  --bg4:     #e5e5ea;
+  --fill:    rgba(118,118,128,0.14);
+  --fill2:   rgba(118,118,128,0.08);
+  --label:   #000000;
+  --label2:  rgba(60,60,67,0.60);
+  --label3:  rgba(60,60,67,0.30);
+  --sep:     rgba(60,60,67,0.22);
+  --blue:    #007aff;
+  --green:   #34c759;
+  --orange:  #ff9500;
+  --red:     #ff3b30;
+  --yellow:  #ff9500;
+  --purple:  #af52de;
+  --card-radius: 14px;
+  --safe-top:    env(safe-area-inset-top, 20px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --shadow: 0 1px 4px rgba(0,0,0,0.08), 0 0 0 0.5px rgba(0,0,0,0.06);
+}
+* { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+html,body { height:100%; background:var(--bg); color:var(--label); font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',Arial,sans-serif; overflow:hidden; }
+#app { display:flex; flex-direction:column; height:100vh; max-width:430px; margin:0 auto; position:relative; }
+/* HEADER */
+.app-header {
+  background:rgba(242,242,247,0.92);
+  backdrop-filter:saturate(180%) blur(20px);
+  -webkit-backdrop-filter:saturate(180%) blur(20px);
+  padding:calc(var(--safe-top) + 4px) 14px 10px;
+  border-bottom:1px solid var(--sep);
+  display:flex; align-items:center; gap:10px; flex-shrink:0; z-index:10;
+}
+.logo-svg { height:32px; width:auto; flex-shrink:0; }
+.logo-img  { height:32px; width:auto; flex-shrink:0; object-fit:contain; }
+.header-text { flex:1; min-width:0; }
+.header-text h1 { font-size:14px; font-weight:700; color:var(--label); letter-spacing:0.1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.header-text p  { font-size:11px; color:var(--label2); margin-top:1px; }
+/* Language switcher */
+.lang-switch { display:flex; gap:5px; flex-shrink:0; }
+.lang-btn { border:none; background:none; padding:2px; cursor:pointer; border-radius:4px; opacity:0.38; transition:opacity 0.15s,transform 0.1s; }
+.lang-btn.active { opacity:1; }
+.lang-btn:active { transform:scale(0.88); }
+.lang-btn svg { display:block; border-radius:3px; box-shadow:0 0 0 0.5px rgba(0,0,0,0.22); }
+/* VIEWS */
+.views { flex:1; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; padding-bottom:calc(60px + var(--safe-bottom) + 10px); background:var(--bg); }
+.view { display:none; padding:12px 14px; }
+.view.active { display:block; animation:fadeIn 0.18s ease; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
+/* SECTION TITLES */
+.section-title { font-size:13px; font-weight:600; color:var(--label2); text-transform:uppercase; letter-spacing:0.4px; margin:18px 0 8px 4px; }
+/* CARDS */
+.card { background:var(--bg2); border-radius:var(--card-radius); overflow:hidden; margin-bottom:12px; box-shadow:var(--shadow); }
+.card-row { display:flex; align-items:center; padding:12px 14px; border-bottom:1px solid var(--sep); gap:10px; }
+.card-row:last-child { border-bottom:none; }
+/* WEEK NAV */
+.week-nav { display:flex; align-items:center; justify-content:space-between; background:var(--bg2); border-radius:var(--card-radius); padding:10px 12px; margin-bottom:10px; box-shadow:var(--shadow); }
+.week-nav-btn { background:var(--fill); border:none; color:var(--blue); width:34px; height:34px; border-radius:8px; font-size:22px; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+.week-nav-btn:active { opacity:0.55; }
+.week-label { text-align:center; }
+.week-label .wk-num   { font-size:12px; color:var(--label2); }
+.week-label .wk-dates { font-size:15px; font-weight:600; }
+/* INFO BAR */
+.week-info-bar { background:var(--bg2); border-radius:var(--card-radius); padding:10px 14px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; box-shadow:var(--shadow); }
+.week-info-item { text-align:center; }
+.week-info-item .val { font-size:17px; font-weight:700; }
+.week-info-item .lbl { font-size:11px; color:var(--label2); margin-top:2px; }
+.val.positive { color:var(--green); } .val.negative { color:var(--red); } .val.neutral { color:var(--label); }
+/* DAY CARD */
+.day-card { background:var(--bg2); border-radius:var(--card-radius); margin-bottom:10px; overflow:hidden; box-shadow:var(--shadow); }
+.day-header { display:flex; align-items:center; justify-content:space-between; padding:10px 14px 8px; border-bottom:1px solid var(--sep); }
+.day-header.day-off { background:rgba(60,60,67,0.04); }
+.day-name-date { display:flex; flex-direction:column; }
+.day-name { font-size:15px; font-weight:600; }
+.day-date { font-size:12px; color:var(--label2); }
+.day-badge { font-size:11px; font-weight:600; padding:3px 10px; border-radius:20px; }
+.badge-festivo  { background:rgba(255,59,48,0.12); color:var(--red); }
+.badge-vacacion { background:rgba(52,199,89,0.12); color:var(--green); }
+.badge-verano   { background:rgba(255,149,0,0.12); color:var(--orange); }
+/* TIME INPUTS */
+.day-body { padding:10px 14px; display:flex; flex-direction:column; gap:8px; }
+.time-row { display:flex; align-items:center; gap:8px; }
+.time-label { font-size:13px; color:var(--label2); width:60px; flex-shrink:0; }
+.time-input-wrap { display:flex; align-items:center; flex:1; gap:6px; }
+input[type="time"] {
+  background:var(--fill); border:none; border-radius:9px; color:var(--label);
+  font-size:16px; font-weight:500; padding:8px 11px; flex:1; outline:none;
+  font-family:inherit; min-width:0; -webkit-appearance:none; appearance:none;
+}
+input[type="time"]:focus { background:var(--fill2); box-shadow:0 0 0 2px var(--blue); }
+input[type="date"] { background:var(--fill); border:none; border-radius:9px; color:var(--label); font-size:15px; font-weight:500; padding:8px 11px; flex:1; outline:none; font-family:inherit; }
+select, input[type="text"], input[type="number"] { background:var(--fill); border:none; border-radius:9px; color:var(--label); font-size:15px; padding:8px 11px; outline:none; font-family:inherit; width:100%; }
+select option { background:#fff; color:#000; }
+.now-btn { background:var(--blue); border:none; color:#fff; border-radius:8px; padding:7px 11px; font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap; flex-shrink:0; }
+.now-btn:active { opacity:0.75; }
+.time-calc-val { font-size:16px; font-weight:700; color:var(--green); background:rgba(52,199,89,0.1); padding:8px 12px; border-radius:9px; flex:1; border:1px solid rgba(52,199,89,0.2); }
+.time-calc-info { font-size:12px; color:var(--label2); padding:0 2px 4px; }
+.day-footer { display:flex; justify-content:space-between; align-items:center; padding:6px 14px 10px; }
+.day-worked { font-size:13px; font-weight:600; }
+.day-delta.pos  { font-size:12px; color:var(--green); font-weight:600; }
+.day-delta.neg  { font-size:12px; color:var(--red);   font-weight:600; }
+.day-delta.zero { font-size:12px; color:var(--label2); }
+/* BOTTOM NAV */
+.bottom-nav {
+  position:fixed; bottom:0; left:50%; transform:translateX(-50%);
+  width:100%; max-width:430px;
+  background:rgba(249,249,249,0.94);
+  backdrop-filter:saturate(180%) blur(20px);
+  -webkit-backdrop-filter:saturate(180%) blur(20px);
+  border-top:0.5px solid rgba(60,60,67,0.29);
+  display:flex; align-items:stretch;
+  padding-bottom:var(--safe-bottom); z-index:100;
+}
+.nav-btn { flex:1; border:none; background:none; color:var(--label2); padding:8px 0 6px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:3px; font-size:10px; font-weight:500; transition:color 0.15s; }
+.nav-btn svg { width:22px; height:22px; }
+.nav-btn.active { color:var(--blue); }
+.nav-btn:active { opacity:0.6; }
+/* BUTTONS */
+.btn { border:none; border-radius:10px; padding:12px 20px; font-size:15px; font-weight:600; cursor:pointer; font-family:inherit; width:100%; }
+.btn-primary { background:var(--blue); color:#fff; } .btn-primary:active { opacity:0.8; }
+.btn-secondary { background:var(--fill); color:var(--blue); }
+.btn-sm { padding:7px 13px; font-size:13px; width:auto; }
+/* REPORTS */
+.report-seg { display:flex; background:var(--fill); border-radius:10px; padding:3px; margin-bottom:12px; gap:2px; }
+.report-seg-btn { flex:1; border:none; background:none; color:var(--label2); font-size:13px; font-weight:500; padding:6px 3px; border-radius:8px; cursor:pointer; }
+.report-seg-btn.active { background:var(--bg2); color:var(--label); font-weight:600; box-shadow:0 1px 3px rgba(0,0,0,0.1); }
+.report-row { display:flex; justify-content:space-between; align-items:center; padding:11px 14px; border-bottom:1px solid var(--sep); }
+.report-row:last-child { border-bottom:none; }
+.report-row-label { font-size:14px; } .report-row-sub { font-size:12px; color:var(--label2); } .report-row-val { font-size:15px; font-weight:600; }
+/* CALENDAR */
+.cal-header { display:flex; align-items:center; justify-content:space-between; padding:10px 14px 0; }
+.cal-month-btn { background:none; border:none; color:var(--blue); font-size:20px; cursor:pointer; padding:6px 10px; }
+.cal-month-label { font-size:17px; font-weight:600; }
+.cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:3px; padding:0 6px; }
+.cal-day-name { text-align:center; font-size:11px; font-weight:600; color:var(--label2); padding:4px 0; }
+.cal-cell { text-align:center; height:36px; line-height:36px; border-radius:50%; font-size:14px; cursor:pointer; }
+.cal-cell:active { opacity:0.6; }
+.cal-cell.today    { color:var(--blue); font-weight:700; }
+.cal-cell.vacation { background:var(--green); color:#fff; }
+.cal-cell.holiday  { background:rgba(255,59,48,0.1); color:var(--red); border-radius:8px; }
+.cal-cell.weekend  { color:var(--label3); cursor:default; }
+.cal-cell.other-month { color:var(--label3); }
+/* ABSENCES */
+.absence-card { background:var(--bg2); border-radius:var(--card-radius); padding:13px 14px; margin-bottom:8px; box-shadow:var(--shadow); }
+.absence-type { font-size:11px; font-weight:700; color:var(--orange); margin-bottom:4px; text-transform:uppercase; letter-spacing:0.5px; }
+.absence-date { font-size:15px; font-weight:600; }
+.absence-detail { font-size:13px; color:var(--label2); margin-top:3px; }
+.absence-action { display:flex; gap:8px; margin-top:10px; }
+/* BALANCE */
+.balance-banner { border-radius:12px; padding:14px 16px; margin-bottom:12px; }
+.balance-banner.pending { background:rgba(255,59,48,0.08); border:1px solid rgba(255,59,48,0.25); }
+.balance-banner-title { font-size:13px; font-weight:700; color:var(--orange); margin-bottom:4px; }
+.balance-banner-val { font-size:26px; font-weight:800; color:var(--red); }
+/* MODAL */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:200; display:flex; align-items:flex-end; justify-content:center; }
+.modal-overlay.hidden { display:none; }
+.modal-sheet { background:var(--bg2); border-radius:20px 20px 0 0; width:100%; max-width:430px; padding:20px 20px calc(var(--safe-bottom)+20px); max-height:88vh; overflow-y:auto; box-shadow:0 -4px 20px rgba(0,0,0,0.12); }
+.modal-title { font-size:17px; font-weight:700; text-align:center; margin-bottom:16px; }
+.modal-cancel { width:100%; background:var(--fill); color:var(--blue); border:none; border-radius:10px; padding:13px; font-size:16px; font-weight:600; cursor:pointer; margin-top:10px; font-family:inherit; }
+/* FIELDS */
+.field-group { display:flex; flex-direction:column; gap:6px; margin-bottom:14px; }
+.field-label { font-size:13px; font-weight:600; color:var(--label2); }
+/* IMPORT */
+.drop-zone { border:2px dashed var(--bg4); border-radius:14px; padding:36px 20px; text-align:center; color:var(--label2); margin-bottom:12px; cursor:pointer; }
+.drop-zone:hover { border-color:var(--blue); color:var(--blue); }
+.import-icon { font-size:40px; margin-bottom:10px; }
+/* MISC */
+::-webkit-scrollbar { display:none; }
+.divider { height:1px; background:var(--sep); margin:4px 0; }
+.text-muted { color:var(--label2); font-size:13px; }
+.mt-8{margin-top:8px} .mt-12{margin-top:12px}
+.empty-state { text-align:center; padding:40px 20px; color:var(--label2); font-size:15px; }
+.empty-state .emoji { font-size:42px; margin-bottom:10px; }
+.summer-banner { background:rgba(255,149,0,0.08); border:1px solid rgba(255,149,0,0.25); border-radius:12px; padding:10px 14px; font-size:13px; color:var(--orange); text-align:center; margin-top:4px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="app-header">
+    <img class="logo-img" src="data:image/png;base64,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" alt="Ghenova">
+    <div class="header-text">
+      <h1 id="hdr-title">Registro Horario Personal</h1>
+      <p id="header-week-label"></p>
+    </div>
+    <div class="lang-switch">
+      <button class="lang-btn active" id="btn-es" onclick="setLang('es')" title="Español">
+        <svg width="30" height="20" viewBox="0 0 3 2" xmlns="http://www.w3.org/2000/svg">
+          <rect width="3" height="2" fill="#c60b1e"/>
+          <rect y="0.5" width="3" height="1" fill="#f1bf00"/>
+        </svg>
+      </button>
+      <button class="lang-btn" id="btn-gl" onclick="setLang('gl')" title="Galego">
+        <svg width="30" height="20" viewBox="0 0 30 20" xmlns="http://www.w3.org/2000/svg">
+          <rect width="30" height="20" fill="#f0f0f0"/>
+          <polygon points="0,14 0,20 30,6 30,0" fill="#00549f"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="views">
+    <div id="view-week" class="view active">
+      <div class="week-nav">
+        <button class="week-nav-btn" onclick="weekNav(-1)">&#8249;</button>
+        <div class="week-label">
+          <div class="wk-num" id="wk-num-label"></div>
+          <div class="wk-dates" id="wk-dates-label"></div>
+        </div>
+        <button class="week-nav-btn" onclick="weekNav(1)">&#8250;</button>
+      </div>
+      <div class="week-info-bar" id="week-info-bar"></div>
+      <div id="week-days-container"></div>
+    </div>
+
+    <div id="view-reports" class="view">
+      <div class="report-seg">
+        <button class="report-seg-btn active" onclick="setReportMode('week',this)" id="rseg-week">Semana</button>
+        <button class="report-seg-btn" onclick="setReportMode('month',this)" id="rseg-month">Mes</button>
+        <button class="report-seg-btn" onclick="setReportMode('year',this)"  id="rseg-year">Año</button>
+        <button class="report-seg-btn" onclick="setReportMode('ytd',this)"   id="rseg-ytd">Acumulado</button>
+      </div>
+      <div id="reports-content"></div>
+    </div>
+
+    <div id="view-vacation" class="view">
+      <div class="section-title" id="vac-title">Días de vacaciones</div>
+      <div class="card">
+        <div class="cal-header">
+          <button class="cal-month-btn" onclick="calNav(-1)">&#8249;</button>
+          <span class="cal-month-label" id="cal-month-label"></span>
+          <button class="cal-month-btn" onclick="calNav(1)">&#8250;</button>
+        </div>
+        <div style="padding:8px 4px 12px">
+          <div class="cal-grid" id="cal-day-names"></div>
+          <div class="cal-grid" id="cal-grid"></div>
+        </div>
+      </div>
+      <div class="text-muted mt-8" id="vac-tip">Toca un día laboral para marcarlo como vacación.</div>
+      <div class="section-title mt-12" id="vac-marked">Vacaciones marcadas</div>
+      <div id="vacation-list"></div>
+      <div class="section-title" id="custom-hol-title">Festivos personalizados de Ferrol</div>
+      <div class="card">
+        <div class="card-row" style="flex-direction:column;align-items:flex-start;gap:8px">
+          <div class="text-muted" id="custom-hol-note" style="font-size:12px">Añade festivos locales de Ferrol que no estén incluidos automáticamente.</div>
+          <div style="display:flex;gap:8px;width:100%">
+            <input type="date" id="custom-holiday-input" style="flex:1">
+            <button class="btn btn-primary btn-sm" id="btn-add-hol" onclick="addCustomHoliday()">Añadir</button>
+          </div>
+        </div>
+      </div>
+      <div id="custom-holiday-list"></div>
+    </div>
+
+    <div id="view-absences" class="view">
+      <div id="recoverable-banner"></div>
+      <div class="report-seg">
+        <button class="report-seg-btn active" id="abs-tab-just" onclick="setAbsenceTab('justified',this)">Justificadas</button>
+        <button class="report-seg-btn"        id="abs-tab-rec"  onclick="setAbsenceTab('recoverable',this)">Recuperables</button>
+      </div>
+      <div id="absences-content"></div>
+      <button class="btn btn-primary mt-12" id="btn-add-abs" onclick="openAbsenceModal()">+ Registrar ausencia</button>
+    </div>
+
+    <div id="view-import" class="view">
+      <div class="section-title" id="imp-title">Importar desde Excel</div>
+      <div class="card" style="padding:14px">
+        <p class="text-muted" id="imp-note" style="margin-bottom:12px;line-height:1.5">Importa registros desde tu Excel (.xlsx/.xlsm). Hoja <strong>REGISTRO</strong>, col A (dd/mm/yyyy), E (entrada), F (salida).</p>
+        <label class="drop-zone" onclick="document.getElementById('excel-file-input').click()">
+          <div class="import-icon">📊</div>
+          <div style="font-size:16px;font-weight:600;color:var(--label);margin-bottom:4px" id="imp-select">Seleccionar archivo</div>
+          <div id="imp-filetypes" style="font-size:13px">.xlsx o .xlsm</div>
+          <input type="file" id="excel-file-input" accept=".xlsx,.xlsm,.xls" style="display:none" onchange="handleExcelFile(this)">
+        </label>
+        <div id="import-status"></div>
+      </div>
+      <div class="section-title" id="exp-title">Exportar / Backup</div>
+      <div class="card">
+        <div class="card-row" style="flex-direction:column;align-items:flex-start;gap:10px">
+          <p class="text-muted" id="exp-note" style="font-size:13px;line-height:1.4">Guarda una copia de seguridad de todos tus datos en JSON.</p>
+          <button class="btn btn-secondary" id="btn-export" onclick="exportBackup()">Exportar backup (JSON)</button>
+        </div>
+        <div class="divider"></div>
+        <div class="card-row" style="flex-direction:column;align-items:flex-start;gap:10px">
+          <p class="text-muted" id="rest-note" style="font-size:13px;line-height:1.4">Restaurar datos desde un backup JSON exportado.</p>
+          <label style="width:100%">
+            <button class="btn btn-secondary" id="btn-restore" onclick="document.getElementById('backup-file-input').click()">Restaurar desde backup</button>
+            <input type="file" id="backup-file-input" accept=".json" style="display:none" onchange="importBackup(this)">
+          </label>
+        </div>
+      </div>
+      <div class="section-title" id="stats-title">Información</div>
+      <div class="card">
+        <div class="card-row" style="justify-content:space-between"><span class="text-muted" id="stats-weeks-lbl">Semanas almacenadas</span><span id="storage-weeks">—</span></div>
+        <div class="card-row" style="justify-content:space-between"><span class="text-muted" id="stats-abs-lbl">Ausencias registradas</span><span id="storage-absences">—</span></div>
+        <div class="card-row" style="justify-content:space-between;border:none"><span class="text-muted" id="stats-vac-lbl">Días de vacaciones</span><span id="storage-vacations">—</span></div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-view="week" onclick="showView('week',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <span id="nav-week">Semana</span>
+    </button>
+    <button class="nav-btn" data-view="reports" onclick="showView('reports',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      <span id="nav-reports">Informes</span>
+    </button>
+    <button class="nav-btn" data-view="vacation" onclick="showView('vacation',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
+      <span id="nav-vacation">Vacaciones</span>
+    </button>
+    <button class="nav-btn" data-view="absences" onclick="showView('absences',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z"/></svg>
+      <span id="nav-absences">Ausencias</span>
+    </button>
+    <button class="nav-btn" data-view="import" onclick="showView('import',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      <span id="nav-import">Importar</span>
+    </button>
+  </nav>
+</div>
+
+<!-- ABSENCE MODAL -->
+<div id="absence-modal" class="modal-overlay hidden">
+  <div class="modal-sheet">
+    <div class="modal-title" id="abs-modal-title">Registrar ausencia</div>
+    <div class="field-group">
+      <div class="field-label" id="abs-modal-type-lbl">Tipo de ausencia</div>
+      <select id="absence-type-sel" onchange="updateAbsenceFields()">
+        <option value="" id="abs-sel-placeholder">— Seleccionar —</option>
+        <optgroup id="optgrp-just" label="No recuperable (justificada)">
+          <option value="justified|medica"          id="abt-medica">Cita médica</option>
+          <option value="justified|dni"             id="abt-dni">Renovación de DNI</option>
+          <option value="justified|pasaporte"       id="abt-pasaporte">Renovación de pasaporte</option>
+          <option value="justified|boda"            id="abt-boda">Boda propia</option>
+          <option value="justified|fallecimiento1"  id="abt-fall1">Fallecimiento familiar 1.º grado</option>
+          <option value="justified|fallecimiento2"  id="abt-fall2">Fallecimiento familiar 2.º grado</option>
+          <option value="justified|hospitalizacion" id="abt-hosp">Hospitalización/enfermedad grave familiar</option>
+          <option value="justified|nacimiento"      id="abt-nac">Nacimiento de hijo/a</option>
+          <option value="justified|traslado"        id="abt-tras">Traslado de domicilio</option>
+          <option value="justified|examen"          id="abt-exam">Examen/prueba oficial</option>
+          <option value="justified|donacion"        id="abt-don">Donación de sangre / médula</option>
+          <option value="justified|judicial"        id="abt-jud">Citación judicial (jurado, testigo)</option>
+          <option value="justified|sindical"        id="abt-sin">Funciones sindicales</option>
+        </optgroup>
+        <optgroup id="optgrp-rec" label="Recuperable">
+          <option value="recoverable|asunto"     id="abt-asunto">Asunto personal</option>
+          <option value="recoverable|medica_rec" id="abt-medrec">Cita médica (recuperable)</option>
+          <option value="recoverable|otro"       id="abt-otro">Otro motivo (recuperable)</option>
+        </optgroup>
+      </select>
+    </div>
+    <div class="field-group">
+      <div class="field-label" id="abs-modal-date-lbl">Fecha</div>
+      <input type="date" id="absence-date-input">
+    </div>
+    <div class="field-group" id="absence-hours-group" style="display:none">
+      <div class="field-label" id="abs-modal-hours-lbl">Horas de ausencia</div>
+      <input type="number" id="absence-hours-input" min="0.5" max="8.5" step="0.5" placeholder="Ej: 2.5">
+      <div class="text-muted" id="abs-hours-note" style="margin-top:4px">Introduce las horas que has estado ausente (0.5 = 30 min)</div>
+    </div>
+    <div class="field-group">
+      <div class="field-label" id="abs-modal-notes-lbl">Notas (opcional)</div>
+      <input type="text" id="absence-notes-input" placeholder="Observaciones...">
+    </div>
+    <div id="absence-recovery-group" style="display:none">
+      <div class="divider" style="margin-bottom:12px"></div>
+      <div class="text-muted" id="abs-already-rec" style="margin-bottom:10px">Si ya has recuperado estas horas, indícalo aquí:</div>
+      <div class="field-group">
+        <div class="field-label" id="abs-rec-date-lbl">Fecha de recuperación</div>
+        <input type="date" id="recovery-date-input">
+      </div>
+      <div class="field-group">
+        <div class="field-label" id="abs-rec-hours-lbl">Horas recuperadas</div>
+        <input type="number" id="recovery-hours-input" min="0.5" max="8.5" step="0.5" placeholder="Ej: 2.5">
+      </div>
+    </div>
+    <button class="btn btn-primary" id="abs-save-btn" onclick="saveAbsence()">Guardar</button>
+    <button class="modal-cancel"    id="abs-cancel-btn" onclick="closeAbsenceModal()">Cancelar</button>
+  </div>
+</div>
+
+<!-- RECOVERY MODAL -->
+<div id="recovery-modal" class="modal-overlay hidden">
+  <div class="modal-sheet">
+    <div class="modal-title" id="rec-modal-title">Registrar recuperación</div>
+    <input type="hidden" id="recovery-absence-id">
+    <div class="field-group">
+      <div class="field-label" id="rec-date-lbl">Fecha de recuperación</div>
+      <input type="date" id="rec-date-input">
+    </div>
+    <div class="field-group">
+      <div class="field-label" id="rec-hours-lbl">Horas recuperadas</div>
+      <input type="number" id="rec-hours-input" min="0.5" max="8.5" step="0.5" placeholder="Ej: 2.5">
+    </div>
+    <div class="field-group">
+      <div class="field-label" id="rec-notes-lbl">Notas</div>
+      <input type="text" id="rec-notes-input" placeholder="Acuerdo con jefe de proyecto...">
+    </div>
+    <button class="btn btn-primary" id="rec-save-btn" onclick="saveRecovery()">Guardar recuperación</button>
+    <button class="modal-cancel"    id="rec-cancel-btn" onclick="document.getElementById('recovery-modal').classList.add('hidden')">Cancelar</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+'use strict';
+
+// ─── TRANSLATIONS ─────────────────────────────────────────────────────────────
+const STRINGS={
+  es:{
+    appTitle:'Registro Horario Personal',
+    navWeek:'Semana',navReports:'Informes',navVacation:'Vacaciones',navAbsences:'Ausencias',navImport:'Importar',
+    worked:'Trabajado',target:'Objetivo',balance:'Balance',
+    entry:'Entrada',exit:'Salida',calcExit:'Salida calc.',now:'Ahora',
+    holiday:'Festivo',vacation:'Vacaciones',
+    summerBanner:'☀️ Jornada intensiva de verano · 7h/día · Sin pausa de comida',
+    remaining:'Faltan',toComplete:'para completar las',weekly:'semanales',
+    holidayMsg:'Día no laborable (festivo)',vacationMsg:'Día de vacaciones',
+    days:['Lunes','Martes','Miércoles','Jueves','Viernes'],
+    daysShort:['Lun','Mar','Mié','Jue','Vie'],
+    calDays:['L','M','X','J','V','S','D'],
+    months:['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'],
+    rptWeek:'Semana',rptMonth:'Mes',rptYear:'Año',rptYtd:'Acumulado',
+    yearWorked:'Horas trabajadas',accTarget:'Objetivo acumulado',noData:'Sin datos aún',
+    vacTitle:'Días de vacaciones',vacMarked:'Vacaciones marcadas',
+    customHol:'Festivos personalizados de Ferrol',
+    vacTip:'Toca un día laboral para marcarlo como vacación.',
+    customHolNote:'Añade festivos locales de Ferrol que no estén incluidos automáticamente.',
+    add:'Añadir',remove:'Quitar',noVacDays:'Sin días de vacaciones marcados.',noCustomHol:'Sin festivos personalizados para este año.',
+    absJust:'Justificadas',absRec:'Recuperables',addAbsence:'+ Registrar ausencia',
+    pendingRecover:'⚠️ Horas pendientes de recuperar',
+    agreeRecover:'Acuerda la recuperación con tu responsable',
+    recoverBtn:'Registrar recuperación',
+    noJustified:'Sin ausencias justificadas registradas',noRecoverable:'Sin ausencias recuperables registradas',
+    totallyRecovered:'✓ Totalmente recuperada',pendingPendiente:'Pendiente recuperar:',
+    recoveredOn:'↩ Recuperado',on:'el',
+    delete:'Eliminar',save:'Guardar',cancel:'Cancelar',
+    absModalTitle:'Registrar ausencia',absType:'Tipo de ausencia',selectOne:'— Seleccionar —',
+    absDate:'Fecha',absHours:'Horas de ausencia',absNotes:'Notas (opcional)',
+    absNotesPlaceholder:'Observaciones...',
+    absHoursNote:'Introduce las horas que has estado ausente (0.5 = 30 min)',
+    absAlreadyRecovered:'Si ya has recuperado estas horas, indícalo aquí:',
+    absRecDate:'Fecha de recuperación',absRecHours:'Horas recuperadas',
+    optgrpJust:'No recuperable (justificada)',optgrpRec:'Recuperable',
+    recModalTitle:'Registrar recuperación',
+    recDate:'Fecha de recuperación',recHours:'Horas recuperadas',recNotes:'Notas',
+    recNotesPlaceholder:'Acuerdo con jefe de proyecto...',
+    saveRecovery:'Guardar recuperación',
+    impTitle:'Importar desde Excel',
+    impNote:'Importa registros de horas desde tu Excel personal (.xlsx / .xlsm). Se leerá la hoja <strong>REGISTRO</strong>, columnas A (fecha dd/mm/yyyy), E (entrada HH:MM) y F (salida HH:MM).',
+    impSelect:'Seleccionar archivo',impFileTypes:'.xlsx o .xlsm',
+    impProcessing:'Procesando...',impSuccess:'✅ Importados',impDays:'días correctamente',
+    expTitle:'Exportar / Backup',
+    expNote:'Guarda una copia de seguridad de todos tus datos en formato JSON.',
+    expBtn:'Exportar backup (JSON)',
+    restNote:'Restaurar datos desde un backup JSON previamente exportado.',
+    restBtn:'Restaurar desde backup',
+    statsTitle:'Información del dispositivo',
+    statsWeeks:'Semanas almacenadas',statsAbs:'Ausencias registradas',statsVac:'Días de vacaciones',
+    absTypes:{
+      medica:'Cita médica',dni:'Renovación de DNI',pasaporte:'Renovación de pasaporte',
+      boda:'Boda propia',fallecimiento1:'Fallecimiento familiar 1.º grado',
+      fallecimiento2:'Fallecimiento familiar 2.º grado',
+      hospitalizacion:'Hospitalización/enfermedad grave familiar',
+      nacimiento:'Nacimiento de hijo/a',traslado:'Traslado de domicilio',
+      examen:'Examen/prueba oficial',donacion:'Donación de sangre / médula',
+      judicial:'Citación judicial (jurado, testigo)',sindical:'Funciones sindicales',
+      asunto:'Asunto personal',medica_rec:'Cita médica (recuperable)',otro:'Otro motivo (recuperable)'
+    }
+  },
+  gl:{
+    appTitle:'Rexistro Horario Persoal',
+    navWeek:'Semana',navReports:'Informes',navVacation:'Vacacións',navAbsences:'Ausencias',navImport:'Importar',
+    worked:'Traballado',target:'Obxectivo',balance:'Balance',
+    entry:'Entrada',exit:'Saída',calcExit:'Saída calc.',now:'Agora',
+    holiday:'Festivo',vacation:'Vacacións',
+    summerBanner:'☀️ Xornada intensiva de verán · 7h/día · Sen pausa de comida',
+    remaining:'Faltan',toComplete:'para completar as',weekly:'semanais',
+    holidayMsg:'Día non laborable (festivo)',vacationMsg:'Día de vacacións',
+    days:['Luns','Martes','Mércores','Xoves','Venres'],
+    daysShort:['Lun','Mar','Mér','Xov','Ven'],
+    calDays:['L','M','M','X','V','S','D'],
+    months:['Xaneiro','Febreiro','Marzo','Abril','Maio','Xuño','Xullo','Agosto','Setembro','Outubro','Novembro','Decembro'],
+    rptWeek:'Semana',rptMonth:'Mes',rptYear:'Ano',rptYtd:'Acumulado',
+    yearWorked:'Horas traballadas',accTarget:'Obxectivo acumulado',noData:'Sen datos aínda',
+    vacTitle:'Días de vacacións',vacMarked:'Vacacións marcadas',
+    customHol:'Festivos personalizados de Ferrol',
+    vacTip:'Toca un día laborable para marcalo como vacacións.',
+    customHolNote:'Engade festivos locais de Ferrol que non estean incluídos automaticamente.',
+    add:'Engadir',remove:'Quitar',noVacDays:'Sen días de vacacións marcados.',noCustomHol:'Sen festivos personalizados para este ano.',
+    absJust:'Xustificadas',absRec:'Recuperables',addAbsence:'+ Rexistrar ausencia',
+    pendingRecover:'⚠️ Horas pendentes de recuperar',
+    agreeRecover:'Acorda a recuperación co teu responsable',
+    recoverBtn:'Rexistrar recuperación',
+    noJustified:'Sen ausencias xustificadas rexistradas',noRecoverable:'Sen ausencias recuperables rexistradas',
+    totallyRecovered:'✓ Totalmente recuperada',pendingPendiente:'Pendente recuperar:',
+    recoveredOn:'↩ Recuperado',on:'o',
+    delete:'Eliminar',save:'Gardar',cancel:'Cancelar',
+    absModalTitle:'Rexistrar ausencia',absType:'Tipo de ausencia',selectOne:'— Seleccionar —',
+    absDate:'Data',absHours:'Horas de ausencia',absNotes:'Notas (opcional)',
+    absNotesPlaceholder:'Observacións...',
+    absHoursNote:'Introduce as horas que estiveches ausente (0.5 = 30 min)',
+    absAlreadyRecovered:'Se xa recuperaches estas horas, indícao aquí:',
+    absRecDate:'Data de recuperación',absRecHours:'Horas recuperadas',
+    optgrpJust:'Non recuperable (xustificada)',optgrpRec:'Recuperable',
+    recModalTitle:'Rexistrar recuperación',
+    recDate:'Data de recuperación',recHours:'Horas recuperadas',recNotes:'Notas',
+    recNotesPlaceholder:'Acordo co xefe de proxecto...',
+    saveRecovery:'Gardar recuperación',
+    impTitle:'Importar desde Excel',
+    impNote:'Importa rexistros de horas desde o teu Excel persoal (.xlsx / .xlsm). Leranse a folla <strong>REGISTRO</strong>, columnas A (data dd/mm/yyyy), E (entrada HH:MM) e F (saída HH:MM).',
+    impSelect:'Seleccionar arquivo',impFileTypes:'.xlsx ou .xlsm',
+    impProcessing:'Procesando...',impSuccess:'✅ Importados',impDays:'días correctamente',
+    expTitle:'Exportar / Copia de seguridade',
+    expNote:'Garda unha copia de seguridade de todos os teus datos en formato JSON.',
+    expBtn:'Exportar copia (JSON)',
+    restNote:'Restaurar datos desde unha copia de seguridade JSON exportada.',
+    restBtn:'Restaurar desde copia',
+    statsTitle:'Información do dispositivo',
+    statsWeeks:'Semanas almacenadas',statsAbs:'Ausencias rexistradas',statsVac:'Días de vacacións',
+    absTypes:{
+      medica:'Cita médica',dni:'Renovación do DNI',pasaporte:'Renovación do pasaporte',
+      boda:'Voda propia',fallecimiento1:'Falecemento familiar 1.º grao',
+      fallecimiento2:'Falecemento familiar 2.º grao',
+      hospitalizacion:'Hospitalización/enfermidade grave familiar',
+      nacimiento:'Nacemento de fillo/a',traslado:'Traslado de domicilio',
+      examen:'Exame/proba oficial',donacion:'Doazón de sangue / medula',
+      judicial:'Citación xudicial (xurado, testemuña)',sindical:'Funcións sindicais',
+      asunto:'Asunto persoal',medica_rec:'Cita médica (recuperable)',otro:'Outro motivo (recuperable)'
+    }
+  }
+};
+
+let currentLang=localStorage.getItem('lang')||'es';
+function t(k){return(STRINGS[currentLang]&&STRINGS[currentLang][k])||STRINGS.es[k]||k;}
+
+function setLang(lang){
+  currentLang=lang; localStorage.setItem('lang',lang);
+  document.getElementById('btn-es').classList.toggle('active',lang==='es');
+  document.getElementById('btn-gl').classList.toggle('active',lang==='gl');
+  applyLang();
+  const av=document.querySelector('.view.active');
+  if(av)_refreshView(av.id.replace('view-',''));
+}
+
+function applyLang(){
+  const s=STRINGS[currentLang];
+  const setTxt=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  const setInner=(id,v)=>{const el=document.getElementById(id);if(el)el.innerHTML=v;};
+  setTxt('hdr-title',s.appTitle);
+  setTxt('nav-week',s.navWeek);setTxt('nav-reports',s.navReports);setTxt('nav-vacation',s.navVacation);
+  setTxt('nav-absences',s.navAbsences);setTxt('nav-import',s.navImport);
+  setTxt('rseg-week',s.rptWeek);setTxt('rseg-month',s.rptMonth);setTxt('rseg-year',s.rptYear);setTxt('rseg-ytd',s.rptYtd);
+  setTxt('vac-title',s.vacTitle);setTxt('vac-tip',s.vacTip);setTxt('vac-marked',s.vacMarked);
+  setTxt('custom-hol-title',s.customHol);setTxt('custom-hol-note',s.customHolNote);setTxt('btn-add-hol',s.add);
+  setTxt('abs-tab-just',s.absJust);setTxt('abs-tab-rec',s.absRec);setTxt('btn-add-abs',s.addAbsence);
+  setTxt('imp-title',s.impTitle);setInner('imp-note',s.impNote);setTxt('imp-select',s.impSelect);setTxt('imp-filetypes',s.impFileTypes);
+  setTxt('exp-title',s.expTitle);setTxt('exp-note',s.expNote);setTxt('btn-export',s.expBtn);
+  setTxt('rest-note',s.restNote);setTxt('btn-restore',s.restBtn);
+  setTxt('stats-title',s.statsTitle);setTxt('stats-weeks-lbl',s.statsWeeks);setTxt('stats-abs-lbl',s.statsAbs);setTxt('stats-vac-lbl',s.statsVac);
+  setTxt('abs-modal-title',s.absModalTitle);setTxt('abs-modal-type-lbl',s.absType);setTxt('abs-sel-placeholder',s.selectOne);
+  setTxt('abs-modal-date-lbl',s.absDate);setTxt('abs-modal-hours-lbl',s.absHours);setTxt('abs-modal-notes-lbl',s.absNotes);
+  setTxt('abs-hours-note',s.absHoursNote);setTxt('abs-already-rec',s.absAlreadyRecovered);
+  setTxt('abs-rec-date-lbl',s.absRecDate);setTxt('abs-rec-hours-lbl',s.absRecHours);
+  setTxt('abs-save-btn',s.save);setTxt('abs-cancel-btn',s.cancel);
+  const oJust=document.getElementById('optgrp-just');if(oJust)oJust.label=s.optgrpJust;
+  const oRec=document.getElementById('optgrp-rec');if(oRec)oRec.label=s.optgrpRec;
+  const abMap={
+    'abt-medica':'medica','abt-dni':'dni','abt-pasaporte':'pasaporte','abt-boda':'boda',
+    'abt-fall1':'fallecimiento1','abt-fall2':'fallecimiento2','abt-hosp':'hospitalizacion',
+    'abt-nac':'nacimiento','abt-tras':'traslado','abt-exam':'examen','abt-don':'donacion',
+    'abt-jud':'judicial','abt-sin':'sindical','abt-asunto':'asunto','abt-medrec':'medica_rec','abt-otro':'otro'
+  };
+  Object.entries(abMap).forEach(([id,k])=>setTxt(id,s.absTypes[k]||k));
+  setTxt('rec-modal-title',s.recModalTitle);setTxt('rec-date-lbl',s.recDate);setTxt('rec-hours-lbl',s.recHours);
+  setTxt('rec-notes-lbl',s.recNotes);setTxt('rec-save-btn',s.saveRecovery);setTxt('rec-cancel-btn',s.cancel);
+  const ani=document.getElementById('absence-notes-input');if(ani)ani.placeholder=s.absNotesPlaceholder;
+  const rni=document.getElementById('rec-notes-input');if(rni)rni.placeholder=s.recNotesPlaceholder;
+}
+
+// ─── CONSTANTS ────────────────────────────────────────────────────────────────
+const WEEKLY_NORMAL=41*60,WEEKLY_SUMMER=35*60,DAILY_NORMAL=8*60+30,DAILY_SUMMER=7*60,LUNCH=30;
+const DAY_KEYS=['mon','tue','wed','thu','fri'];
+
+// ─── UTILITIES ────────────────────────────────────────────────────────────────
+function pad(n){return String(n).padStart(2,'0');}
+function dateToISO(d){return`${d.getUTCFullYear()}-${pad(d.getUTCMonth()+1)}-${pad(d.getUTCDate())}`;}
+function isoToDate(s){const[y,m,d]=s.split('-').map(Number);return new Date(Date.UTC(y,m-1,d));}
+function addDays(d,n){const r=new Date(d);r.setUTCDate(r.getUTCDate()+n);return r;}
+function timeToMin(s){if(!s)return null;const[h,m]=s.split(':').map(Number);return h*60+m;}
+function minToTime(m){if(m===null||m===undefined)return'';const neg=m<0;const a=Math.abs(m);return(neg?'-':'')+pad(Math.floor(a/60))+':'+pad(a%60);}
+function fmtDur(m){if(m===null||m===undefined)return'—';const neg=m<0;const a=Math.abs(m);return(neg?'-':'')+Math.floor(a/60)+'h'+pad(a%60)+'m';}
+function getISOWeek(date){const d=new Date(Date.UTC(date.getUTCFullYear(),date.getUTCMonth(),date.getUTCDate()));const day=d.getUTCDay()||7;d.setUTCDate(d.getUTCDate()+4-day);const y1=new Date(Date.UTC(d.getUTCFullYear(),0,1));return{week:Math.ceil(((d-y1)/86400000+1)/7),year:d.getUTCFullYear()};}
+function getWeekKey(d){const{week,year}=getISOWeek(d);return`${year}-W${pad(week)}`;}
+function getMondayOf(d){const r=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()));const day=r.getUTCDay()||7;if(day!==1)r.setUTCDate(r.getUTCDate()-(day-1));return r;}
+function isSummer(d){const m=d.getUTCMonth()+1;return m===7||m===8;}
+function todayISO(){return dateToISO(new Date());}
+function fmtDateLang(iso){const d=isoToDate(iso);return`${d.getUTCDate()} ${STRINGS[currentLang].months[d.getUTCMonth()].slice(0,3)} ${d.getUTCFullYear()}`;}
+function ddmmyyyyToISO(s){if(!s)return null;const p=String(s).split('/');if(p.length!==3)return null;const y=p[2].length===2?'20'+p[2]:p[2];return`${y}-${pad(p[1])}-${pad(p[0])}`;}
+
+// ─── HOLIDAY ENGINE ────────────────────────────────────────────────────────────
+function getEasterSunday(year){const a=year%19,b=Math.floor(year/100),c=year%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),mo=Math.floor((h+l-7*m+114)/31),da=((h+l-7*m+114)%31)+1;return new Date(Date.UTC(year,mo-1,da));}
+function movSunToMon(d){const r=new Date(d);if(r.getUTCDay()===0)r.setUTCDate(r.getUTCDate()+1);return r;}
+const _hCache={};
+function getHolidaySet(year){
+  if(_hCache[year])return _hCache[year];
+  const h=new Set();
+  const add=(mo,da)=>{h.add(dateToISO(movSunToMon(new Date(Date.UTC(year,mo-1,da)))));};
+  add(1,1);add(1,6);add(5,1);add(10,12);add(11,1);add(12,6);add(12,8);add(12,25); // National
+  add(3,19);add(5,17);add(7,25);add(8,15); // Galicia
+  const easter=getEasterSunday(year);
+  h.add(dateToISO(addDays(easter,-3)));h.add(dateToISO(addDays(easter,-2))); // Semana Santa
+  h.add(dateToISO(movSunToMon(new Date(Date.UTC(year,7,2))))); // Ferrol Aug 2
+  AppData.getCustomHolidays(year).forEach(x=>h.add(x));
+  _hCache[year]=h;return h;
+}
+function invalidateHolCache(year){delete _hCache[year];}
+function isHoliday(iso){return getHolidaySet(isoToDate(iso).getUTCFullYear()).has(iso);}
+
+// ─── APPDATA ──────────────────────────────────────────────────────────────────
+const AppData={
+  _g(k){try{return JSON.parse(localStorage.getItem(k));}catch(e){return null;}},
+  _s(k,v){localStorage.setItem(k,JSON.stringify(v));},
+  getWeekData(wk){return this._g('wk_'+wk)||{};},
+  setWeekData(wk,d){this._s('wk_'+wk,d);},
+  getDayData(wk,dk){return this.getWeekData(wk)[dk]||{};},
+  setDayData(wk,dk,data){const w=this.getWeekData(wk);w[dk]={...(w[dk]||{}),...data};this.setWeekData(wk,w);},
+  getVacations(){return this._g('vacations')||[];},
+  addVacation(iso){const v=this.getVacations();if(!v.includes(iso))v.push(iso);this._s('vacations',v);},
+  removeVacation(iso){this._s('vacations',this.getVacations().filter(x=>x!==iso));},
+  getCustomHolidays(year){return this._g('cHol_'+year)||[];},
+  addCustomHoliday(iso){const y=isoToDate(iso).getUTCFullYear();const l=this.getCustomHolidays(y);if(!l.includes(iso))l.push(iso);this._s('cHol_'+y,l);invalidateHolCache(y);},
+  removeCustomHoliday(iso){const y=isoToDate(iso).getUTCFullYear();this._s('cHol_'+y,this.getCustomHolidays(y).filter(x=>x!==iso));invalidateHolCache(y);},
+  getAbsences(){return this._g('absences')||[];},
+  addAbsence(obj){const l=this.getAbsences();obj.id='ab_'+Date.now()+'_'+Math.random().toString(36).slice(2,5);l.push(obj);this._s('absences',l);return obj.id;},
+  updateAbsence(id,u){this._s('absences',this.getAbsences().map(a=>a.id===id?{...a,...u}:a));},
+  deleteAbsence(id){this._s('absences',this.getAbsences().filter(a=>a.id!==id));},
+  getRecoverableBalance(){return this.getAbsences().filter(a=>a.kind==='recoverable').reduce((s,a)=>{const owed=a.hours||0;const rec=(a.recoveries||[]).reduce((r,x)=>r+x.hours,0);return s+Math.max(0,owed-rec);},0);},
+  exportAll(){const out={version:1,exported:new Date().toISOString()};Object.keys(localStorage).filter(k=>k.startsWith('wk_')||k==='vacations'||k==='absences'||k.startsWith('cHol_')||k==='lang').forEach(k=>out[k]=this._g(k));return out;},
+  importAll(data){Object.keys(data).forEach(k=>{if(k==='version'||k==='exported')return;this._s(k,data[k]);});Object.keys(_hCache).forEach(k=>delete _hCache[k]);},
+  getWeekKeys(){return Object.keys(localStorage).filter(k=>k.startsWith('wk_')).map(k=>k.slice(3)).sort();}
+};
+
+// ─── WEEK ENGINE ──────────────────────────────────────────────────────────────
+const WE={
+  getWeekDays(monday){const days=STRINGS[currentLang].days;const short=STRINGS[currentLang].daysShort;return DAY_KEYS.map((dk,i)=>({dk,isoStr:dateToISO(addDays(monday,i)),name:days[i],short:short[i]}));},
+  getDayStatus(iso){const d=isoToDate(iso);const dow=d.getUTCDay();if(dow===0||dow===6)return'weekend';if(isHoliday(iso))return'holiday';if(AppData.getVacations().includes(iso))return'vacation';return'work';},
+  getDailyTarget(iso){return isSummer(isoToDate(iso))?DAILY_SUMMER:DAILY_NORMAL;},
+  getWeeklyTarget(monday){const days=this.getWeekDays(monday);let tgt=isSummer(monday)?WEEKLY_SUMMER:WEEKLY_NORMAL;days.forEach(({isoStr,dk})=>{const st=this.getDayStatus(isoStr);if(st==='holiday'||st==='vacation'){const sum=isSummer(isoToDate(isoStr));tgt-=sum?DAILY_SUMMER:(dk==='fri'?7*60:DAILY_NORMAL);}});return Math.max(0,tgt);},
+  getWorkedMin(iso,entry,exit){if(!entry||!exit)return 0;const d=isoToDate(iso);let w=timeToMin(exit)-timeToMin(entry);if(w<=0)return 0;if(!isSummer(d)&&d.getUTCDay()!==5)w-=LUNCH;return Math.max(0,w);},
+  getMonThuWorked(wk,monday){return this.getWeekDays(monday).filter(d=>d.dk!=='fri').reduce((s,{dk,isoStr})=>{if(this.getDayStatus(isoStr)!=='work')return s;const data=AppData.getDayData(wk,dk);return s+this.getWorkedMin(isoStr,data.entry,data.exit);},0);},
+  getFriRequired(wk,monday){return Math.max(0,this.getWeeklyTarget(monday)-this.getMonThuWorked(wk,monday));},
+  calcFridayExit(wk,monday,entry){if(!entry)return null;return minToTime(timeToMin(entry)+this.getFriRequired(wk,monday));},
+  getWeekSummary(wk,monday){
+    const tgt=this.getWeeklyTarget(monday);let totalWorked=0;
+    const days=this.getWeekDays(monday).map(({dk,isoStr,name,short})=>{
+      const status=this.getDayStatus(isoStr);const data=AppData.getDayData(wk,dk);
+      let worked=0,calcExit=null;
+      if(status==='work'){if(dk==='fri'){calcExit=this.calcFridayExit(wk,monday,data.entry);worked=data.exitActual?this.getWorkedMin(isoStr,data.entry,data.exitActual):this.getFriRequired(wk,monday);}else{worked=this.getWorkedMin(isoStr,data.entry,data.exit);}}
+      totalWorked+=worked;
+      return{dk,isoStr,name,short,status,data,worked,calcExit,summer:isSummer(isoToDate(isoStr))};
+    });
+    return{target:tgt,totalWorked,balance:totalWorked-tgt,days,summer:isSummer(monday)};
+  }
+};
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let currentMonday=getMondayOf(new Date()),reportMode='week',absenceTab='justified';
+let calMonth=new Date().getUTCMonth(),calYear=new Date().getUTCFullYear();
+
+// ─── VIEW SWITCHING ───────────────────────────────────────────────────────────
+function showView(name,btn){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  if(btn)btn.classList.add('active');
+  else{const b=document.querySelector(`.nav-btn[data-view="${name}"]`);if(b)b.classList.add('active');}
+  _refreshView(name);
+}
+function _refreshView(name){
+  if(name==='week')renderWeek();
+  if(name==='reports')renderReports();
+  if(name==='vacation')renderCalendar();
+  if(name==='absences')renderAbsences();
+  if(name==='import')renderImportStats();
+}
+
+// ─── WEEK VIEW ────────────────────────────────────────────────────────────────
+function weekNav(dir){currentMonday=addDays(currentMonday,dir*7);renderWeek();}
+
+function renderWeek(){
+  const wk=getWeekKey(currentMonday);
+  const{week,year}=getISOWeek(currentMonday);
+  const fri=addDays(currentMonday,4);
+  const sum=WE.getWeekSummary(wk,currentMonday);
+  const months=STRINGS[currentLang].months;
+  document.getElementById('wk-num-label').textContent=`${t('navWeek')} ${week} · ${year}`;
+  document.getElementById('wk-dates-label').textContent=`${currentMonday.getUTCDate()} ${months[currentMonday.getUTCMonth()].slice(0,3)} – ${fri.getUTCDate()} ${months[fri.getUTCMonth()].slice(0,3)}`;
+  document.getElementById('header-week-label').textContent=`Sem. ${week}/${year}`;
+  const balSign=sum.balance>=0?'+':'';const balCls=sum.balance>0?'positive':sum.balance<0?'negative':'neutral';
+  document.getElementById('week-info-bar').innerHTML=`
+    <div class="week-info-item"><div class="val">${fmtDur(sum.totalWorked)}</div><div class="lbl">${t('worked')}</div></div>
+    <div style="width:1px;background:var(--sep)"></div>
+    <div class="week-info-item"><div class="val">${fmtDur(sum.target)}</div><div class="lbl">${t('target')}</div></div>
+    <div style="width:1px;background:var(--sep)"></div>
+    <div class="week-info-item"><div class="val ${balCls}">${balSign}${fmtDur(sum.balance)}</div><div class="lbl">${t('balance')}</div></div>`;
+  const cont=document.getElementById('week-days-container');cont.innerHTML='';
+  sum.days.forEach(day=>cont.appendChild(buildDayCard(day,wk,currentMonday)));
+  if(sum.summer){const b=document.createElement('div');b.className='summer-banner';b.textContent=t('summerBanner');cont.appendChild(b);}
+}
+
+function buildDayCard(day,wk,monday){
+  const card=document.createElement('div');card.className='day-card';
+  const months=STRINGS[currentLang].months;
+  const d=isoToDate(day.isoStr);
+  const dateStr=`${d.getUTCDate()} ${months[d.getUTCMonth()].slice(0,3)}`;
+  const off=day.status!=='work';
+  let badge='';
+  if(day.status==='holiday')badge=`<span class="day-badge badge-festivo">${t('holiday')}</span>`;
+  else if(day.status==='vacation')badge=`<span class="day-badge badge-vacacion">${t('vacation')}</span>`;
+  else if(day.summer)badge=`<span class="day-badge badge-verano">&#9728;</span>`;
+  let body='';
+  if(!off){
+    if(day.dk==='fri'){
+      const entry=day.data.entry||'',req=WE.getFriRequired(wk,monday);
+      body=`<div class="day-body">
+        <div class="time-row"><span class="time-label">${t('entry')}</span><div class="time-input-wrap"><input type="time" value="${entry}" onchange="saveDayField('${wk}','fri','entry',this.value);renderWeek()" id="inp_fri_entry"><button class="now-btn" onclick="setNow('inp_fri_entry','${wk}','fri','entry')">${t('now')}</button></div></div>
+        <div class="time-row"><span class="time-label">${t('calcExit')}</span><div class="time-calc-val">${day.calcExit||'—'}</div></div>
+        <div class="time-calc-info">${t('remaining')} <strong style="color:var(--blue)">${fmtDur(req)}</strong> ${t('toComplete')} ${fmtDur(WE.getWeeklyTarget(monday))} ${t('weekly')}</div>
+      </div>`;
+    }else{
+      const entry=day.data.entry||'',exit=day.data.exit||'';
+      const tgt=WE.getDailyTarget(day.isoStr),delta=day.worked-tgt;
+      const dSign=delta>=0?'+':'',dCls=delta>0?'pos':delta<0?'neg':'zero';
+      body=`<div class="day-body">
+        <div class="time-row"><span class="time-label">${t('entry')}</span><div class="time-input-wrap"><input type="time" value="${entry}" onchange="saveDayField('${wk}','${day.dk}','entry',this.value);renderWeek()" id="inp_${day.dk}_entry"><button class="now-btn" onclick="setNow('inp_${day.dk}_entry','${wk}','${day.dk}','entry')">${t('now')}</button></div></div>
+        <div class="time-row"><span class="time-label">${t('exit')}</span><div class="time-input-wrap"><input type="time" value="${exit}" onchange="saveDayField('${wk}','${day.dk}','exit',this.value);renderWeek()" id="inp_${day.dk}_exit"><button class="now-btn" onclick="setNow('inp_${day.dk}_exit','${wk}','${day.dk}','exit')">${t('now')}</button></div></div>
+      </div><div class="day-footer"><span class="day-worked">${fmtDur(day.worked)}</span><span class="day-delta ${dCls}">${dSign}${fmtDur(delta)}</span></div>`;
+    }
+  }else{body=`<div class="day-body"><p class="text-muted" style="padding:2px 0">${day.status==='holiday'?t('holidayMsg'):t('vacationMsg')}</p></div>`;}
+  card.innerHTML=`<div class="day-header${off?' day-off':''}"><div class="day-name-date"><div class="day-name">${day.name}</div><div class="day-date">${dateStr}</div></div>${badge}</div>${body}`;
+  return card;
+}
+
+function saveDayField(wk,dk,field,val){AppData.setDayData(wk,dk,{[field]:val});}
+function setNow(inputId,wk,dk,field){const now=new Date();const tStr=pad(now.getHours())+':'+pad(now.getMinutes());const el=document.getElementById(inputId);if(el)el.value=tStr;AppData.setDayData(wk,dk,{[field]:tStr});renderWeek();}
+
+// ─── REPORTS ──────────────────────────────────────────────────────────────────
+function setReportMode(mode,btn){reportMode=mode;document.querySelectorAll('.report-seg-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderReports();}
+
+function _weekMondayFromKey(wk){
+  const[yr,wn]=wk.split('-W').map(Number);
+  const jan4=new Date(Date.UTC(yr,0,4));
+  const baseMon=getMondayOf(jan4);
+  const baseWk=getISOWeek(baseMon).week;
+  return addDays(baseMon,(wn-baseWk)*7);
+}
+
+function renderReports(){
+  const cont=document.getElementById('reports-content');
+  const todayStr=dateToISO(new Date());
+  const months=STRINGS[currentLang].months;
+  if(reportMode==='week'){
+    const wks=AppData.getWeekKeys().reverse();
+    if(!wks.length){cont.innerHTML=`<div class="empty-state"><div class="emoji">📊</div>${t('noData')}</div>`;return;}
+    cont.innerHTML=wks.map(wk=>{
+      const[yr,wn]=wk.split('-W').map(Number);
+      const mon=_weekMondayFromKey(wk);const sum=WE.getWeekSummary(wk,mon);
+      const balSign=sum.balance>=0?'+':'';const balColor=sum.balance>=0?'var(--green)':'var(--red)';
+      return`<div class="card" style="margin-bottom:8px"><div class="report-row">
+        <div><div class="report-row-label">${t('rptWeek')} ${wn}/${yr}</div><div class="report-row-sub">${mon.getUTCDate()}/${pad(mon.getUTCMonth()+1)} – ${addDays(mon,4).getUTCDate()}/${pad(addDays(mon,4).getUTCMonth()+1)}</div></div>
+        <div style="text-align:right"><div class="report-row-val">${fmtDur(sum.totalWorked)}</div><div style="font-size:12px;color:${balColor}">${balSign}${fmtDur(sum.balance)}</div></div>
+      </div></div>`;
+    }).join('');
+  }else if(reportMode==='month'){
+    const byMonth={};
+    AppData.getWeekKeys().forEach(wk=>{const mon=_weekMondayFromKey(wk);WE.getWeekSummary(wk,mon).days.forEach(d=>{if(d.status!=='work')return;const key=d.isoStr.slice(0,7);if(!byMonth[key])byMonth[key]={worked:0,target:0};byMonth[key].worked+=d.worked;byMonth[key].target+=WE.getDailyTarget(d.isoStr);});});
+    const mks=Object.keys(byMonth).sort().reverse();
+    if(!mks.length){cont.innerHTML=`<div class="empty-state"><div class="emoji">📊</div>${t('noData')}</div>`;return;}
+    cont.innerHTML='<div class="card">'+mks.map((m,i)=>{const[yr,mo]=m.split('-');const bal=byMonth[m].worked-byMonth[m].target;const balSign=bal>=0?'+':'';const balColor=bal>=0?'var(--green)':'var(--red)';return`<div class="report-row"${i===mks.length-1?' style="border:none"':''}><div class="report-row-label">${months[parseInt(mo)-1]} ${yr}</div><div style="text-align:right"><div class="report-row-val">${fmtDur(byMonth[m].worked)}</div><div style="font-size:12px;color:${balColor}">${balSign}${fmtDur(bal)}</div></div></div>`;}).join('')+'</div>';
+  }else if(reportMode==='year'){
+    const byYear={};
+    AppData.getWeekKeys().forEach(wk=>{const yr=parseInt(wk.split('-W')[0]);const mon=_weekMondayFromKey(wk);const sum=WE.getWeekSummary(wk,mon);if(!byYear[yr])byYear[yr]={worked:0,target:0};byYear[yr].worked+=sum.totalWorked;byYear[yr].target+=sum.target;});
+    const yks=Object.keys(byYear).sort().reverse();
+    if(!yks.length){cont.innerHTML=`<div class="empty-state"><div class="emoji">📊</div>${t('noData')}</div>`;return;}
+    cont.innerHTML='<div class="card">'+yks.map((yr,i)=>{const bal=byYear[yr].worked-byYear[yr].target;const balSign=bal>=0?'+':'';const balColor=bal>=0?'var(--green)':'var(--red)';return`<div class="report-row"${i===yks.length-1?' style="border:none"':''}><div class="report-row-label">${t('rptYear')} ${yr}</div><div style="text-align:right"><div class="report-row-val">${fmtDur(byYear[yr].worked)}</div><div style="font-size:12px;color:${balColor}">${balSign}${fmtDur(bal)}</div></div></div>`;}).join('')+'</div>';
+  }else if(reportMode==='ytd'){
+    const yr=new Date().getUTCFullYear();let worked=0,target=0;
+    AppData.getWeekKeys().filter(wk=>wk.startsWith(yr+'-W')).forEach(wk=>{const mon=_weekMondayFromKey(wk);WE.getWeekSummary(wk,mon).days.forEach(d=>{if(d.isoStr>todayStr)return;worked+=d.worked;if(d.status==='work')target+=WE.getDailyTarget(d.isoStr);});});
+    const bal=worked-target;const balSign=bal>=0?'+':'';const balColor=bal>=0?'var(--green)':'var(--red)';
+    cont.innerHTML=`<div class="card"><div class="report-row"><div class="report-row-label">${t('yearWorked')} (${yr})</div><div class="report-row-val">${fmtDur(worked)}</div></div><div class="report-row"><div class="report-row-label">${t('accTarget')}</div><div class="report-row-val">${fmtDur(target)}</div></div><div class="report-row" style="border:none"><div class="report-row-label">${t('balance')}</div><div class="report-row-val" style="color:${balColor}">${balSign}${fmtDur(bal)}</div></div></div>`;
+  }
+}
+
+// ─── CALENDAR ─────────────────────────────────────────────────────────────────
+function calNav(dir){calMonth+=dir;if(calMonth<0){calMonth=11;calYear--;}if(calMonth>11){calMonth=0;calYear++;}renderCalendar();}
+
+function renderCalendar(){
+  const months=STRINGS[currentLang].months;
+  document.getElementById('cal-month-label').textContent=`${months[calMonth]} ${calYear}`;
+  document.getElementById('cal-day-names').innerHTML=STRINGS[currentLang].calDays.map(n=>`<div class="cal-day-name">${n}</div>`).join('');
+  const first=new Date(Date.UTC(calYear,calMonth,1));
+  const lastDay=new Date(Date.UTC(calYear,calMonth+1,0)).getUTCDate();
+  let startDow=first.getUTCDay();if(startDow===0)startDow=7;startDow--;
+  const todayStr=dateToISO(new Date());const vacations=AppData.getVacations();
+  const grid=document.getElementById('cal-grid');grid.innerHTML='';
+  for(let i=0;i<startDow;i++){const c=document.createElement('div');c.className='cal-cell other-month';grid.appendChild(c);}
+  for(let day=1;day<=lastDay;day++){
+    const iso=`${calYear}-${pad(calMonth+1)}-${pad(day)}`;
+    const c=document.createElement('div');
+    const dow=new Date(Date.UTC(calYear,calMonth,day)).getUTCDay();
+    const isWkend=dow===0||dow===6;const isHol=isHoliday(iso);const isVac=vacations.includes(iso);
+    c.className='cal-cell'+(iso===todayStr?' today':'')+(isVac?' vacation':isHol?' holiday':isWkend?' weekend':'');
+    c.textContent=day;if(!isWkend&&!isHol){c.onclick=()=>toggleVacation(iso);}
+    grid.appendChild(c);
+  }
+  renderVacationList();renderCustomHolidayList();
+}
+
+function toggleVacation(iso){if(AppData.getVacations().includes(iso))AppData.removeVacation(iso);else AppData.addVacation(iso);renderCalendar();}
+function renderVacationList(){const cont=document.getElementById('vacation-list');const vac=AppData.getVacations().sort();if(!vac.length){cont.innerHTML=`<div class="text-muted">${t('noVacDays')}</div>`;return;}cont.innerHTML=vac.map(iso=>`<div class="card" style="padding:0;margin-bottom:6px"><div class="card-row" style="justify-content:space-between"><span>${fmtDateLang(iso)}</span><button class="btn btn-sm" style="background:rgba(255,59,48,0.1);color:var(--red)" onclick="removeVac('${iso}')">${t('remove')}</button></div></div>`).join('');}
+function removeVac(iso){AppData.removeVacation(iso);renderCalendar();}
+function addCustomHoliday(){const inp=document.getElementById('custom-holiday-input');if(!inp.value)return;AppData.addCustomHoliday(inp.value);inp.value='';renderCalendar();}
+function renderCustomHolidayList(){const cont=document.getElementById('custom-holiday-list');const list=AppData.getCustomHolidays(calYear);if(!list.length){cont.innerHTML=`<div class="text-muted">${t('noCustomHol')}</div>`;return;}cont.innerHTML=list.map(iso=>`<div class="card" style="padding:0;margin-bottom:6px"><div class="card-row" style="justify-content:space-between"><span>${fmtDateLang(iso)}</span><button class="btn btn-sm" style="background:rgba(255,59,48,0.1);color:var(--red)" onclick="removeCustomHol('${iso}')">${t('remove')}</button></div></div>`).join('');}
+function removeCustomHol(iso){AppData.removeCustomHoliday(iso);renderCalendar();}
+
+// ─── ABSENCES ─────────────────────────────────────────────────────────────────
+function setAbsenceTab(tab,btn){absenceTab=tab;document.querySelectorAll('#view-absences .report-seg-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderAbsences();}
+
+function renderAbsences(){
+  const pendMin=Math.round(AppData.getRecoverableBalance()*60);
+  const banner=document.getElementById('recoverable-banner');
+  if(pendMin>0){banner.innerHTML=`<div class="balance-banner pending"><div class="balance-banner-title">${t('pendingRecover')}</div><div class="balance-banner-val">${fmtDur(pendMin)}</div><div style="font-size:12px;color:var(--label2);margin-top:4px">${t('agreeRecover')}</div></div>`;}else banner.innerHTML='';
+  const cont=document.getElementById('absences-content');
+  const all=AppData.getAbsences().filter(a=>a.kind===(absenceTab==='justified'?'justified':'recoverable')).sort((a,b)=>b.date.localeCompare(a.date));
+  if(!all.length){cont.innerHTML=`<div class="empty-state"><div class="emoji">${absenceTab==='justified'?'📋':'🔄'}</div>${t(absenceTab==='justified'?'noJustified':'noRecoverable')}</div>`;return;}
+  const absTypes=STRINGS[currentLang].absTypes;
+  cont.innerHTML=all.map(a=>{
+    const label=absTypes[a.subtype]||a.subtype;
+    const pendH=a.kind==='recoverable'?Math.max(0,(a.hours||0)-(a.recoveries||[]).reduce((s,r)=>s+r.hours,0)):null;
+    const recs=(a.recoveries||[]).map(r=>`<div class="absence-detail">${t('recoveredOn')} ${fmtDur(Math.round(r.hours*60))} ${t('on')} ${fmtDateLang(r.date)}${r.notes?' – '+r.notes:''}</div>`).join('');
+    return`<div class="absence-card"><div class="absence-type">${label}</div><div class="absence-date">${fmtDateLang(a.date)}</div>${a.hours?`<div class="absence-detail">${fmtDur(Math.round(a.hours*60))}</div>`:''}${a.notes?`<div class="absence-detail">${a.notes}</div>`:''}${a.kind==='recoverable'?`<div class="absence-detail" style="color:${pendH>0?'var(--red)':'var(--green)'}">${pendH>0?`${t('pendingPendiente')} ${fmtDur(Math.round(pendH*60))}`:t('totallyRecovered')}</div>${recs}<div class="absence-action">${pendH>0?`<button class="btn btn-secondary btn-sm" onclick="openRecoveryModal('${a.id}')">${t('recoverBtn')}</button>`:''}<button class="btn btn-sm" style="background:rgba(255,59,48,0.1);color:var(--red)" onclick="deleteAbsence('${a.id}')">${t('delete')}</button></div>`:`<div class="absence-action"><button class="btn btn-sm" style="background:rgba(255,59,48,0.1);color:var(--red)" onclick="deleteAbsence('${a.id}')">${t('delete')}</button></div>`}</div>`;
+  }).join('');
+}
+
+function deleteAbsence(id){if(confirm(t('delete')+'?')){AppData.deleteAbsence(id);renderAbsences();}}
+function openAbsenceModal(){document.getElementById('absence-type-sel').value='';document.getElementById('absence-date-input').value=todayISO();document.getElementById('absence-hours-input').value='';document.getElementById('absence-notes-input').value='';document.getElementById('absence-hours-group').style.display='none';document.getElementById('absence-recovery-group').style.display='none';document.getElementById('absence-modal').classList.remove('hidden');}
+function closeAbsenceModal(){document.getElementById('absence-modal').classList.add('hidden');}
+function updateAbsenceFields(){const v=document.getElementById('absence-type-sel').value;document.getElementById('absence-hours-group').style.display=v?'block':'none';document.getElementById('absence-recovery-group').style.display=v.startsWith('recoverable')?'block':'none';}
+function saveAbsence(){const tv=document.getElementById('absence-type-sel').value;const date=document.getElementById('absence-date-input').value;const hours=parseFloat(document.getElementById('absence-hours-input').value)||0;const notes=document.getElementById('absence-notes-input').value.trim();if(!tv||!date){alert(t('absType'));return;}const[kind,subtype]=tv.split('|');const obj={kind,subtype,date,hours,notes,recoveries:[]};if(kind==='recoverable'){const rd=document.getElementById('recovery-date-input').value;const rh=parseFloat(document.getElementById('recovery-hours-input').value)||0;if(rd&&rh>0)obj.recoveries=[{date:rd,hours:rh,notes:''}];}AppData.addAbsence(obj);closeAbsenceModal();renderAbsences();}
+function openRecoveryModal(id){document.getElementById('recovery-absence-id').value=id;document.getElementById('rec-date-input').value=todayISO();document.getElementById('rec-hours-input').value='';document.getElementById('rec-notes-input').value='';document.getElementById('recovery-modal').classList.remove('hidden');}
+function saveRecovery(){const id=document.getElementById('recovery-absence-id').value;const date=document.getElementById('rec-date-input').value;const hours=parseFloat(document.getElementById('rec-hours-input').value)||0;const notes=document.getElementById('rec-notes-input').value.trim();if(!date||hours<=0){alert(t('recHours'));return;}const abs=AppData.getAbsences().find(a=>a.id===id);if(!abs)return;AppData.updateAbsence(id,{recoveries:[...(abs.recoveries||[]),{date,hours,notes}]});document.getElementById('recovery-modal').classList.add('hidden');renderAbsences();}
+
+// ─── IMPORT / EXPORT ──────────────────────────────────────────────────────────
+function renderImportStats(){document.getElementById('storage-weeks').textContent=AppData.getWeekKeys().length;document.getElementById('storage-absences').textContent=AppData.getAbsences().length;document.getElementById('storage-vacations').textContent=AppData.getVacations().length;}
+
+function handleExcelFile(input){
+  const file=input.files[0];if(!file)return;
+  const status=document.getElementById('import-status');
+  status.innerHTML=`<p class="text-muted">${t('impProcessing')}</p>`;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:'array',cellDates:true});
+      const sheet=wb.Sheets['REGISTRO']||wb.Sheets[wb.SheetNames[0]];
+      if(!sheet){status.innerHTML='<p style="color:var(--red)">Hoja REGISTRO no encontrada.</p>';return;}
+      const rows=XLSX.utils.sheet_to_json(sheet,{header:1,raw:false,dateNF:'dd/mm/yyyy'});
+      const byDate={};let count=0;
+      rows.forEach(row=>{
+        const rawDate=row[0];const rawE=row[4];const rawF=row[5];if(!rawDate)return;
+        const iso=ddmmyyyyToISO(String(rawDate));
+        if(!iso||!/^\d{4}-\d{2}-\d{2}$/.test(iso))return;
+        const entry=parseExcelTime(rawE);const exit=parseExcelTime(rawF);
+        if(!byDate[iso])byDate[iso]={firstEntry:null,lastExit:null};
+        if(entry&&(!byDate[iso].firstEntry||entry<byDate[iso].firstEntry))byDate[iso].firstEntry=entry;
+        if(exit&&(!byDate[iso].lastExit||exit>byDate[iso].lastExit))byDate[iso].lastExit=exit;
+      });
+      Object.entries(byDate).forEach(([iso,{firstEntry,lastExit}])=>{
+        if(!firstEntry)return;
+        const d=isoToDate(iso);const dow=d.getUTCDay();if(dow===0||dow===6)return;
+        const dk=DAY_KEYS[dow-1];const wk=getWeekKey(d);
+        if(dow===5)AppData.setDayData(wk,dk,{entry:firstEntry,exitActual:lastExit});
+        else AppData.setDayData(wk,dk,{entry:firstEntry,exit:lastExit});
+        count++;
+      });
+      status.innerHTML=`<div style="background:rgba(52,199,89,0.1);border:1px solid rgba(52,199,89,0.3);border-radius:10px;padding:12px 14px;color:var(--green);font-weight:600">${t('impSuccess')} ${count} ${t('impDays')}</div>`;
+      renderImportStats();
+    }catch(err){status.innerHTML=`<p style="color:var(--red)">Error: ${err.message}</p>`;}
+  };
+  reader.readAsArrayBuffer(file);input.value='';
+}
+
+function parseExcelTime(val){if(!val)return null;if(typeof val==='string'&&/^\d{1,2}:\d{2}/.test(val))return val.slice(0,5);if(typeof val==='number'){const m=Math.round(val*24*60);return pad(Math.floor(m/60))+':'+pad(m%60);}return null;}
+
+function exportBackup(){const blob=new Blob([JSON.stringify(AppData.exportAll(),null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`ghenova-backup-${todayISO()}.json`;a.click();URL.revokeObjectURL(url);}
+function importBackup(input){const file=input.files[0];if(!file)return;const reader=new FileReader();reader.onload=e=>{try{const data=JSON.parse(e.target.result);if(data.version!==1)throw new Error('Versión incompatible');if(!confirm(`Restaurar backup del ${new Date(data.exported).toLocaleDateString('es-ES')}?`))return;AppData.importAll(data);alert('✅ Restaurado correctamente.');renderWeek();renderImportStats();}catch(err){alert('Error: '+err.message);}};reader.readAsText(file);input.value='';}
+
+// ─── PWA ──────────────────────────────────────────────────────────────────────
+if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+applyLang();
+renderWeek();
+renderImportStats();
+</script>
+</body>
+</html>
